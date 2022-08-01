@@ -4,6 +4,7 @@ const fmt = std.fmt;
 const testing = std.testing;
 
 pub const BoolParser = struct {
+    // 是否支持
     pub fn isSupported(comptime T: type) bool {
         return switch (@typeInfo(T)) {
             .Bool, .Int, .Float => true,

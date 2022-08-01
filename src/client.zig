@@ -53,9 +53,12 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
         /// Initializes a Client on a connection / pipe provided by the user.
         pub fn init(self: *Self, conn: net.Stream) !void {
             self.conn = conn;
+            // tag 来分发
             switch (buffering) {
                 .NoBuffering => {
+                    //  设置读源
                     self.reader = conn.reader();
+                    // 设置写源
                     self.writer = conn.writer();
                 },
                 .Fixed => {
@@ -67,12 +70,14 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
             }
 
             if (std.io.is_async) {
+                // 使用异步
                 self.readLock = std.event.Lock{};
                 self.writeLock = std.event.Lock{};
             }
 
             self.broken = false;
 
+            // ping 一下
             self.send(void, .{ "HELLO", "3" }) catch |err| {
                 self.broken = true;
                 if (err == error.GotErrorReply) {
@@ -149,12 +154,15 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
             // For this reason we don't await `self.readLock.acquire()` and in
             // the meantime we start writing to the write stream.
             if (std.io.is_async) {
+                // 获取写锁
                 heldWrite = self.writeLock.acquire();
+                // 获取读锁
                 heldReadFrame = async self.readLock.acquire();
             }
 
             var heldReadFrameNotAwaited = true;
             defer if (std.io.is_async and heldReadFrameNotAwaited) {
+                // 等待读
                 heldRead = await heldReadFrame;
                 heldRead.release();
             };
@@ -165,10 +173,13 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
                 defer if (std.io.is_async) heldWrite.release();
 
                 // Serialize all the commands
+                // 包含来one字段
                 if (@hasField(@TypeOf(allocator), "one")) {
+                    // 序列化命令
                     try CommandSerializer.serializeCommand(self.writer, cmds);
                 } else {
                     inline for (std.meta.fields(@TypeOf(cmds))) |field| {
+                        // 获取cmd的name
                         const cmd = @field(cmds, field.name);
                         // try ArgSerializer.serialize(&self.out.stream, args);
                         try CommandSerializer.serializeCommand(self.writer, cmd);

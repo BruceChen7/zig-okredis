@@ -1,5 +1,8 @@
+// field and value
 pub const FV = struct {
+    // 字符串
     field: []const u8,
+    // 字符串
     value: []const u8,
 
     pub const RedisArguments = struct {

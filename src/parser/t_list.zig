@@ -6,6 +6,7 @@ const fmt = std.fmt;
 /// Uses RESP3Parser to delegate parsing of the list contents recursively.
 pub const ListParser = struct {
     // TODO: prevent users from unmarshaling structs out of strings
+    // 类型转换是否支持
     pub fn isSupported(comptime T: type) bool {
         return switch (@typeInfo(T)) {
             .Array => true,

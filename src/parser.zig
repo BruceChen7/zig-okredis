@@ -189,6 +189,7 @@ pub const RESP3Parser = struct {
     fn ifSupported(comptime parser: type, comptime T: type, allocator: anytype, msg: anytype) !T {
         if (@hasField(@TypeOf(allocator), "ptr")) {
             return if (comptime parser.isSupportedAlloc(T))
+                // 用来alloc
                 parser.parseAlloc(T, rootParser, allocator.ptr, msg)
             else
                 error.UnsupportedConversion;

@@ -15,11 +15,14 @@
 /// In case of failure the parsing function is NOT required to consume the
 /// proper amount of stream data. It's expected that decoding errors always
 /// result in a broken connection state.
+// 类似于oop中的virtual method
 pub fn isParserType(comptime T: type) bool {
+    // 反射的意思
     const tid = @typeInfo(T);
     if ((tid == .Struct or tid == .Enum or tid == .Union) and
         @hasDecl(T, "Redis") and @hasDecl(T.Redis, "Parser"))
     {
+        // 没有声明
         if (!@hasDecl(T.Redis.Parser, "parse"))
             @compileError(
                 \\`Redis.Parser` trait requires implementing:

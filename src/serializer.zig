@@ -2,6 +2,7 @@ const std = @import("std");
 const traits = @import("./traits.zig");
 
 pub const CommandSerializer = struct {
+    // 序列号commands
     pub fn serializeCommand(msg: anytype, command: anytype) !void {
         // Serializes an entire command.
         // Callers can expect this function to:
@@ -26,7 +27,9 @@ pub const CommandSerializer = struct {
         // function passing `.{"GET", self.key}` as
         // argument.
         const CmdT = @TypeOf(command);
+        // command 类型是command
         if (comptime traits.isCommand(CmdT)) {
+            // 用来序列化
             return CmdT.RedisCommand.serialize(command, CommandSerializer, msg);
         }
 
@@ -38,6 +41,7 @@ pub const CommandSerializer = struct {
         }
 
         switch (@typeInfo(CmdT)) {
+            // 编译错误
             else => {
                 @compileLog(CmdT);
                 @compileError("unsupported");
@@ -46,6 +50,7 @@ pub const CommandSerializer = struct {
                 // Since we already handled structs that implement the
                 // Command trait, the expectation here is that this struct
                 // is in fact a Zig Tuple.
+                // 不是tuple
                 if (!(comptime std.meta.trait.isTuple(CmdT))) {
                     @compileError("Only Zig tuples and Redis.Command types are allowed as argument to send.");
                 }
@@ -53,9 +58,12 @@ pub const CommandSerializer = struct {
                 // Count the number of arguments
                 var argNum: usize = 0;
                 inline for (std.meta.fields(CmdT)) |field| {
+                    // 获取name
                     const arg = @field(command, field.name);
+                    // 获取形参
                     const ArgT = @TypeOf(arg);
                     if (comptime traits.isArguments(ArgT)) {
+                        // 计算参数个数
                         argNum += ArgT.RedisArguments.count(arg);
                     } else {
                         argNum += switch (@typeInfo(ArgT)) {
@@ -68,6 +76,7 @@ pub const CommandSerializer = struct {
                                 },
                                 else => @compileError("unsupported"),
                             },
+                            // 默认是一
                             else => 1,
                         };
                     }
@@ -84,6 +93,7 @@ pub const CommandSerializer = struct {
                     if (comptime traits.isArguments(ArgT)) {
                         try ArgT.RedisArguments.serialize(arg, CommandSerializer, msg);
                     } else {
+                        // array类型
                         switch (@typeInfo(ArgT)) {
                             .Array => |arr| if (arr.child != u8) {
                                 for (arg) |elem| {
@@ -193,9 +203,8 @@ pub const CommandSerializer = struct {
                     },
                 }
             },
+            // 编译错误
             else => @compileError("Type " ++ @typeName(T) ++ " is not supported."),
         }
     }
 };
-
-

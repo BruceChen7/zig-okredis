@@ -6,9 +6,11 @@ const Client = okredis.Client;
 pub fn main() !void {
     // Connect
     const addr = try net.Address.parseIp4("127.0.0.1", 6379);
+    // 获取tcp链接
     var connection = try net.tcpConnectToAddress(addr);
 
     var client: Client = undefined;
+    // 初始化tcp 连接
     try client.init(connection);
     defer client.close();
 

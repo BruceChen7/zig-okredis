@@ -4,6 +4,7 @@ const std = @import("std");
 const common = @import("../_common_utils.zig");
 const FV = common.FV;
 
+// 实现了hset操作
 pub const HSET = struct {
     key: []const u8,
     fvs: []const FV,
@@ -30,6 +31,8 @@ pub const HSET = struct {
     // RedisCommand in the same scope (it causes a shadowing error).
     pub const forStruct = _forStruct;
 
+    // 序列化命令
+    // 内嵌结构体
     pub const RedisCommand = struct {
         pub fn serialize(self: HSET, comptime rootSerializer: type, msg: anytype) !void {
             return rootSerializer.serializeCommand(msg, .{ "HSET", self.key, self });
@@ -41,6 +44,7 @@ pub const HSET = struct {
             return self.fvs.len * 2;
         }
 
+        // 序列号key and value
         pub fn serialize(self: HSET, comptime rootSerializer: type, msg: anytype) !void {
             for (self.fvs) |fv| {
                 try rootSerializer.serializeArgument(msg, []const u8, fv.field);
