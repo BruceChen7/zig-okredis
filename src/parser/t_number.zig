@@ -12,14 +12,17 @@ pub const NumberParser = struct {
         };
     }
 
+    // 解析数字
     pub fn parse(comptime T: type, comptime _: type, msg: anytype) !T {
         // TODO: write real implementation
         var buf: [100]u8 = undefined;
         var end: usize = 0;
+        // 每个元素
         for (buf) |*elem, i| {
             const ch = try msg.readByte();
             elem.* = ch;
             if (ch == '\r') {
+                // 到达了最后
                 end = i;
                 break;
             }
@@ -27,7 +30,9 @@ pub const NumberParser = struct {
         try msg.skipBytes(1, .{});
         return switch (@typeInfo(T)) {
             else => unreachable,
+            // int
             .Int => try fmt.parseInt(T, buf[0..end], 10),
+            // Float
             .Float => try fmt.parseFloat(T, buf[0..end]),
         };
     }

@@ -17,24 +17,29 @@ pub const Logging = union(enum) {
 };
 
 pub const Client = RedisClient(.NoBuffering, .NoLogging);
+// 设置成client
 pub const BufferedClient = RedisClient(.{ .Fixed = 4096 }, .NoLogging);
 pub fn RedisClient(buffering: Buffering, _: Logging) type {
+    // read buffer
     const ReadBuffer = switch (buffering) {
         .NoBuffering => void,
         .Fixed => |b| std.io.BufferedReader(b, net.Stream.Reader),
     };
 
+    // write buffer
     const WriteBuffer = switch (buffering) {
         .NoBuffering => void,
         .Fixed => |b| std.io.BufferedWriter(b, net.Stream.Writer),
     };
 
+    // 返回一个结构体
     return struct {
         conn: net.Stream,
         reader: switch (buffering) {
             .NoBuffering => net.Stream.Reader,
             .Fixed => ReadBuffer.Reader,
         },
+        // stream writer
         writer: switch (buffering) {
             .NoBuffering => net.Stream.Writer,
             .Fixed => WriteBuffer.Writer,
@@ -94,6 +99,7 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
 
         /// Sends a command to Redis and tries to parse the response as the specified type.
         pub fn send(self: *Self, comptime T: type, cmd: anytype) !T {
+            // 设置one字段
             return self.pipelineImpl(T, cmd, .{ .one = {} });
         }
 
@@ -201,6 +207,7 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
                 }
             }
 
+            // 如果是async
             if (std.io.is_async) {
                 heldReadFrameNotAwaited = false;
                 heldRead = await heldReadFrame;
@@ -210,13 +217,16 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
             // TODO: error procedure
             if (@hasField(@TypeOf(allocator), "one")) {
                 if (@hasField(@TypeOf(allocator), "ptr")) {
+                    // 反序列化结果，返回结果
                     return RESP3.parseAlloc(Ts, allocator.ptr, self.reader);
                 } else {
+                    //  直接返回结果, send 方法调用这个分支
                     return RESP3.parse(Ts, self.reader);
                 }
             } else {
                 var result: Ts = undefined;
 
+                // 返回结果的类型
                 if (Ts == void) {
                     const cmd_num = std.meta.fields(@TypeOf(cmds)).len;
                     comptime var i: usize = 0;
@@ -270,7 +280,7 @@ pub fn RedisClient(buffering: Buffering, _: Logging) type {
                         },
                         else => @compileError("Unsupported type"),
                     }
-                }
+                } // else 结束
                 return result;
             }
         }

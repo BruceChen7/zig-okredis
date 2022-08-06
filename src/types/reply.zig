@@ -13,6 +13,7 @@ pub const DynamicReply = struct {
     attribs: [][2]*DynamicReply,
     data: Data,
 
+    // 也是一种声明
     pub const Data = union(enum) {
         Nil: void,
         Bool: bool,
@@ -25,6 +26,7 @@ pub const DynamicReply = struct {
         Map: [][2]*DynamicReply,
     };
 
+    // 声明
     pub const Redis = struct {
         pub const Parser = struct {
             pub const HandlesAttributes = true;

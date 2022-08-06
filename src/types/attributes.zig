@@ -15,6 +15,7 @@ pub fn WithAttribs(comptime T: type) type {
         const Self = @This();
         pub const Redis = struct {
             pub const Parser = struct {
+                // 这个是声明
                 pub const HandlesAttributes = true;
 
                 pub fn parse(_: u8, comptime _: type, _: anytype) !Self {

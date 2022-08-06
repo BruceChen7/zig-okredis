@@ -18,10 +18,13 @@ const MapParser = @import("./parser/t_map.zig").MapParser;
 const traits = @import("./traits.zig");
 
 pub const RESP3Parser = struct {
+    // 实例
     const rootParser = @This();
 
     pub fn parse(comptime T: type, msg: anytype) !T {
+        //  从网络流中获取一个字节
         const tag = try msg.readByte();
+        // 根据tag来解析
         return parseImpl(T, tag, .{}, msg);
     }
 
@@ -76,15 +79,19 @@ pub const RESP3Parser = struct {
     //     }
     //     return errorset;
     // }
+    // 第一个参数是要解析的结果类型
+    // https://github.com/antirez/RESP3/blob/master/spec.md
     pub fn parseImpl(comptime T: type, tag: u8, allocator: anytype, msg: anytype) anyerror!T {
         // First we get out of the way the basic case where
         // the return type is void and we just discard one full answer.
+        // 丢弃结果
         if (T == void) return VoidParser.discardOne(tag, msg);
 
         // Here we need to deal with optionals and pointers.
         // - Optionals imply the possibility of decoding a nil reply.
         // - Single-item pointers require us to allocate the type and recur.
         // - Slices are the only type of pointer that we want to delegate to sub-parsers.
+        // 编译，判断allocator的类型是否合法
         switch (@typeInfo(T)) {
             .Optional => |opt| {
                 var nextTag = tag;
@@ -103,7 +110,10 @@ pub const RESP3Parser = struct {
                 // Otherwise recur with the underlying type.
                 return try parseImpl(opt.child, nextTag, allocator, msg);
             },
+            // 指针
             .Pointer => |ptr| {
+                // 如果没有ptr字段
+                // 必须ptr字段
                 if (!@hasField(@TypeOf(allocator), "ptr")) {
                     @compileError("`parse` can't perform allocations so it can't handle pointers, use `parseAlloc` instead.");
                 }
@@ -130,7 +140,9 @@ pub const RESP3Parser = struct {
             },
         }
 
+        // 判断第一个字符是否合理
         var nextTag = tag;
+        // 属性类型
         if (tag == '|') {
             // If the type declares to be able to decode attributes, we delegate immediately.
             if (comptime traits.handlesAttributes(T)) {
@@ -151,7 +163,9 @@ pub const RESP3Parser = struct {
         }
 
         // If the type implement its own decoding procedure, we delegate the job to it.
+        // 如果是具体的类型，那么直接委托其decode
         if (comptime traits.isParserType(T)) {
+            // parseAlloc
             var x: T = if (@hasField(@TypeOf(allocator), "ptr"))
                 try T.Redis.Parser.parseAlloc(tag, rootParser, allocator.ptr, msg)
             else
@@ -163,18 +177,22 @@ pub const RESP3Parser = struct {
             else => std.debug.panic("Found `{c}` in the main parser's switch." ++
                 " Probably a bug in a type that implements `Redis.Parser`.", .{nextTag}),
             '_' => {
+                // Null 类型
                 try msg.skipBytes(2, .{});
                 return error.GotNilReply;
             },
+            // simple error
             '-' => {
                 try VoidParser.discardOne('+', msg);
                 return error.GotErrorReply;
             },
+            // 是一个error 字符串
             '!' => {
                 try VoidParser.discardOne('$', msg);
                 return error.GotErrorReply;
             },
             ':' => return try ifSupported(NumberParser, T, allocator, msg),
+            // 浮点数类型
             ',' => return try ifSupported(DoubleParser, T, allocator, msg),
             '#' => return try ifSupported(BoolParser, T, allocator, msg),
             '$', '=' => return try ifSupported(BlobStringParser, T, allocator, msg),

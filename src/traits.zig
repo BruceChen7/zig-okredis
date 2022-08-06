@@ -37,6 +37,7 @@ pub fn isParserType(comptime T: type) bool {
                 \\
             );
 
+        // 必须含有destroy的函数
         if (!@hasDecl(T.Redis.Parser, "destroy"))
             @compileError(
                 \\`Redis.Parser` trait requires implementing:
@@ -54,7 +55,9 @@ pub fn isParserType(comptime T: type) bool {
 /// from the stream automatically by the main parser.
 pub fn handlesAttributes(comptime T: type) bool {
     if (comptime isParserType(T)) {
+        // 是否有声明
         if (@hasDecl(T.Redis.Parser, "HandlesAttributes")) {
+            // 这种方式表示的是静态变量
             return T.Redis.Parser.HandlesAttributes;
         }
     }
@@ -66,7 +69,9 @@ pub fn handlesAttributes(comptime T: type) bool {
 /// types that read attributes. For those types this trait defaults to `true`
 pub fn noOptionalWrapper(comptime T: type) bool {
     if (comptime isParserType(T)) {
+        // 结构体中是否有对应的声明
         if (@hasDecl(T.Redis.Parser, "NoOptionalWrapper")) {
+            // 如果有，那么直接返回
             return T.Redis.Parser.NoOptionalWrapper;
         } else {
             if (@hasDecl(T.Redis.Parser, "HandlesAttributes")) {
@@ -89,6 +94,7 @@ pub fn isArguments(comptime T: type) bool {
     return (tid == .Struct or tid == .Enum or tid == .Union) and @hasDecl(T, "RedisArguments");
 }
 
+// 是否是command
 pub fn isCommand(comptime T: type) bool {
     const tid = @typeInfo(T);
     return (tid == .Struct or tid == .Enum or tid == .Union) and @hasDecl(T, "RedisCommand");

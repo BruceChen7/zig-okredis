@@ -32,6 +32,7 @@ pub const FullError = struct {
 /// use `OrFullErr` to also obtain the error message.
 ///
 /// You can also decode `nil` replies using this union.
+// 包裹结果的类型
 pub fn OrErr(comptime T: type) type {
     return union(enum) {
         Ok: T,
@@ -41,6 +42,7 @@ pub fn OrErr(comptime T: type) type {
         Err: Error,
 
         const Self = @This();
+        // 声明一个类型
         pub const Redis = struct {
             pub const Parser = struct {
                 pub const NoOptionalWrapper = true;

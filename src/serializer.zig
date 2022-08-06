@@ -28,6 +28,7 @@ pub const CommandSerializer = struct {
         // argument.
         const CmdT = @TypeOf(command);
         // command 类型是command
+        // 实现来RedisCommand
         if (comptime traits.isCommand(CmdT)) {
             // 用来序列化
             return CmdT.RedisCommand.serialize(command, CommandSerializer, msg);
@@ -36,6 +37,7 @@ pub const CommandSerializer = struct {
         // TODO: decide if this should be removed.
         // Why would someone use Arguments directly?
         if (comptime traits.isArguments(CmdT)) {
+            // 可以打印的类型
             try msg.print("*{}\r\n", CmdT.RedisArguments.count(command));
             return CmdT.RedisArguments.serialize(command, CommandSerializer, msg);
         }
@@ -146,6 +148,7 @@ pub const CommandSerializer = struct {
         }
     }
 
+    // 用来序列化命令
     pub fn serializeArgument(msg: anytype, comptime T: type, val: T) !void {
         // Serializes a single argument.
         // Supports the following types:

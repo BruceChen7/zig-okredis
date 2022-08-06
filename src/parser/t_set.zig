@@ -92,6 +92,7 @@ pub const SetParser = struct {
                 }
             }
 
+            // 错误
             if (foundErr) return error.GotErrorReply;
             if (foundNil) return error.GotNilReply;
             if (hashMapError) return error.DecodeError; // TODO: find a way to save and return the precise error?

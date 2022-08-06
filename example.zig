@@ -28,16 +28,21 @@ pub fn main() !void {
     // `GET` actually returns a string response, but the
     // parser is nice enough to try and parse it for us.
     // Works with both integers and floats.
+    // 获取key的value
     const reply = try client.send(i64, .{ "GET", "key" });
+    // 直接打印结果
     std.debug.print("key = {}\n", .{reply});
 
     // Try to get the value, but this time using an optional type,
     // this allows decoding Redis Nil replies.
     try client.send(void, .{ "DEL", "nokey" });
+    // return ?i64
     var maybe = try client.send(?i64, .{ "GET", "nokey" });
     if (maybe) |val| {
+        // 有值
         std.debug.print("Found nokey with value = {}\n", .{val}); // Won't be printed.
     } else {
+        // null
         std.debug.print("Yep, nokey is not present.\n", .{});
     }
 
@@ -59,6 +64,7 @@ pub fn main() !void {
 
     switch (try client.send(OrErr(i64), .{ "INCR", "stringkey" })) {
         .Ok, .Nil => unreachable,
+        // 打印错误
         .Err => |err| std.debug.print("error code = {s}\n", .{err.getCode()}),
     }
 

@@ -22,6 +22,7 @@ pub const VoidParser = struct {
             switch (itemTag) {
                 else => std.debug.panic("Found `{c}` in the *VOID* parser's switch." ++
                     " Probably a bug in a type that implements `Redis.Parser`.", .{itemTag}),
+                // 第一个为_
                 '_' => try msg.skipBytes(2, .{}), // `_\r\n`
                 '#' => try msg.skipBytes(3, .{}), // `#t\r\n`, `#t\r\n`
                 '$', '=', '!' => {
@@ -35,7 +36,9 @@ pub const VoidParser = struct {
                     var end: usize = 0;
                     for (buf) |*elem, i| {
                         const ch = try msg.readByte();
+                        // 获取字符
                         elem.* = ch;
+                        // 最后一个ch
                         if (ch == '\r') {
                             end = i;
                             break;
@@ -44,6 +47,12 @@ pub const VoidParser = struct {
                     var size = try fmt.parseInt(usize, buf[0..end], 10);
                     try msg.skipBytes(1 + size + 2, .{});
                 },
+                // + 单行简单字符串
+                // - 错误信息
+                // : 整形数字
+                // $ 多行字符串
+                // * 数组
+                // https://moelove.info/2017/03/05/%E7%90%86%E8%A7%A3-Redis-%E7%9A%84-RESP-%E5%8D%8F%E8%AE%AE/
                 ':', ',', '+', '-' => {
                     // Simple element with final `\r\n`
                     if (itemTag == '-') {
@@ -71,6 +80,7 @@ pub const VoidParser = struct {
                     }
                     try msg.skipBytes(1, .{});
                     var size = try fmt.parseInt(usize, buf[0..end], 10);
+                    // size * 2
                     size *= 2;
 
                     // Add all the new items to the pile that needs to be
@@ -78,6 +88,7 @@ pub const VoidParser = struct {
                     // loop.
                     itemsToConsume += size + 1;
                 },
+                // * 数组，
                 '*', '%' => {
                     // Lists, Maps
                     // TODO: write real implementation
@@ -102,8 +113,10 @@ pub const VoidParser = struct {
             }
 
             // If we still have items to consume, read the next tag.
+            // itemsToConsume
             if (itemsToConsume > 0) itemTag = try msg.readByte();
         }
+        // 返回错误
         if (foundError) return error.GotErrorReply;
     }
 };

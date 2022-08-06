@@ -6,6 +6,7 @@ pub const DEL = struct {
         return .{ .keys = keys };
     }
 
+    // 用来删除命令
     const RedisCommand = struct {
         pub fn serialize(self: Self, rootSerializer: type, msg: anytype) !void {
             return rootSerializer.serialize(msg, .{ "DEL", self.keys });

@@ -4,8 +4,11 @@ const std = @import("std");
 const common = @import("../_common_utils.zig");
 const FV = common.FV;
 
+// 这是一个命令
 pub const HMGET = struct {
+    // memeber name 和 类型
     key: []const u8,
+    // string的字符串数组
     fields: []const []const u8,
 
     /// Instantiates a new HMGET command.
@@ -38,21 +41,25 @@ pub const HMGET = struct {
 
 fn _forStruct(comptime T: type) type {
     // TODO: there is some duplicated code with xread. Values should be a dedicated generic type.
+    // 直接编译错误
     if (@typeInfo(T) != .Struct) @compileError("Only Struct types allowed.");
     return struct {
         key: []const u8,
 
         const Self = @This();
         pub fn init(key: []const u8) Self {
+            // 初始化的key
             return .{ .key = key };
         }
 
         /// Validates if the command is syntactically correct.
         pub fn validate(self: Self) !void {
+            // 是否为0
             if (self.key.len == 0) return error.EmptyKeyName;
         }
 
         pub const RedisCommand = struct {
+            // 序列化的命令
             pub fn serialize(self: Self, comptime rootSerializer: type, msg: anytype) !void {
                 return rootSerializer.serializeCommand(msg, .{
                     "HMGET",
@@ -65,6 +72,7 @@ fn _forStruct(comptime T: type) type {
         };
 
         // We are marking ouserlves also as an argument to manage struct serialization.
+        // 形参
         pub const RedisArguments = struct {
             pub fn count(_: Self) usize {
                 return comptime std.meta.fields(T).len;
@@ -81,6 +89,7 @@ fn _forStruct(comptime T: type) type {
 
 test "basic usage" {
     const cmd = HMGET.init("mykey", &[_][]const u8{ "field1", "field2" });
+    // 命令是否有效
     try cmd.validate();
 
     const ExampleStruct = struct {
@@ -103,6 +112,7 @@ test "serializer" {
 
     {
         {
+            // 初始化
             correctMsg.reset();
             testMsg.reset();
 
@@ -110,6 +120,7 @@ test "serializer" {
                 testMsg.writer(),
                 HMGET.init("k1", &[_][]const u8{"f1"}),
             );
+            // 序列化命令
             try serializer.serializeCommand(
                 correctMsg.writer(),
                 .{ "HMGET", "k1", "f1" },

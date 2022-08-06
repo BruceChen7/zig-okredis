@@ -65,6 +65,7 @@ pub const BlobStringParser = struct {
     }
 
     pub fn isSupportedAlloc(comptime T: type) bool {
+        // 是否是指针
         return switch (@typeInfo(T)) {
             .Pointer => true,
             else => isSupported(T),

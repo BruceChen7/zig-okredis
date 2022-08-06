@@ -3,6 +3,7 @@ const std = @import("std");
 const fmt = std.fmt;
 const testing = std.testing;
 
+// 用来执行parser
 pub const BoolParser = struct {
     // 是否支持
     pub fn isSupported(comptime T: type) bool {

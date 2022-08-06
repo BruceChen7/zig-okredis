@@ -5,6 +5,7 @@ const common = @import("../_common_utils.zig");
 const FV = common.FV;
 
 // 实现了hset操作
+// 同样实现一个命令
 pub const HSET = struct {
     key: []const u8,
     fvs: []const FV,
